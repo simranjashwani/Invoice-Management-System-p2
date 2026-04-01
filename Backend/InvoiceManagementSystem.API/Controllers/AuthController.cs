@@ -26,7 +26,7 @@ namespace InvoiceManagementSystem.API.Controllers
         {
             //  Dummy validation (for now)
             if (loginDto.Username != "admin" || loginDto.Password != "1234")
-                return Unauthorized("Invalid username or password");
+                return Unauthorized(new { message = "Invalid username or password" });
 
             //  Generate Token
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -58,7 +58,10 @@ namespace InvoiceManagementSystem.API.Controllers
 
             return Ok(new
             {
-                token = tokenHandler.WriteToken(token)
+                token = tokenHandler.WriteToken(token),
+                username = loginDto.Username,
+                 role = role
+    
             });
         }
     }

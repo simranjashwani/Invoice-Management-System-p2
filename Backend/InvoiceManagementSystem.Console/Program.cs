@@ -116,7 +116,7 @@ using InvoiceManagementSystem.DAL.Enums;
 var services = new ServiceCollection();
 
 services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer("Server=LAPTOP-A9K6HH4U\\SQLEXPRESS;Database=InvoiceManagementDB;Trusted_Connection=True;TrustServerCertificate=True;")
+    options.UseSqlServer("Server=localhost\\SQLEXPRESS;Database=InvoiceManagementDB;Trusted_Connection=True;TrustServerCertificate=True;")
 );
 
 services.AddScoped<IInvoiceRepository, InvoiceRepository>();

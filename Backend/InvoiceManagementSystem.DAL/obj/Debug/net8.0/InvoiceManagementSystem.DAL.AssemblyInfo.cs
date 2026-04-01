@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("InvoiceManagementSystem.DAL")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d8d0dc5cc53758945838a85e0855bfa3fae0bfcf")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7ac853c34f663a36ddc699a29c43f04ea8ab1a8b")]
 [assembly: System.Reflection.AssemblyProductAttribute("InvoiceManagementSystem.DAL")]
 [assembly: System.Reflection.AssemblyTitleAttribute("InvoiceManagementSystem.DAL")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

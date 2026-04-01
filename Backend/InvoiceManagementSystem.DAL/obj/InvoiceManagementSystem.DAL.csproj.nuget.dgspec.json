@@ -1,25 +1,31 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\91942\\Desktop\\InvoiceManagementSystem\\Backend\\InvoiceManagementSystem.DAL\\InvoiceManagementSystem.DAL.csproj": {}
+    "C:\\Users\\Simran\\Invoice-Management-System-p2\\Backend\\InvoiceManagementSystem.DAL\\InvoiceManagementSystem.DAL.csproj": {}
   },
   "projects": {
-    "C:\\Users\\91942\\Desktop\\InvoiceManagementSystem\\Backend\\InvoiceManagementSystem.DAL\\InvoiceManagementSystem.DAL.csproj": {
+    "C:\\Users\\Simran\\Invoice-Management-System-p2\\Backend\\InvoiceManagementSystem.DAL\\InvoiceManagementSystem.DAL.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\91942\\Desktop\\InvoiceManagementSystem\\Backend\\InvoiceManagementSystem.DAL\\InvoiceManagementSystem.DAL.csproj",
+        "projectUniqueName": "C:\\Users\\Simran\\Invoice-Management-System-p2\\Backend\\InvoiceManagementSystem.DAL\\InvoiceManagementSystem.DAL.csproj",
         "projectName": "InvoiceManagementSystem.DAL",
-        "projectPath": "C:\\Users\\91942\\Desktop\\InvoiceManagementSystem\\Backend\\InvoiceManagementSystem.DAL\\InvoiceManagementSystem.DAL.csproj",
-        "packagesPath": "C:\\Users\\91942\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\91942\\Desktop\\InvoiceManagementSystem\\Backend\\InvoiceManagementSystem.DAL\\obj\\",
+        "projectPath": "C:\\Users\\Simran\\Invoice-Management-System-p2\\Backend\\InvoiceManagementSystem.DAL\\InvoiceManagementSystem.DAL.csproj",
+        "packagesPath": "C:\\Users\\Simran\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Simran\\Invoice-Management-System-p2\\Backend\\InvoiceManagementSystem.DAL\\obj\\",
         "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
         "configFilePaths": [
-          "C:\\Users\\91942\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\Simran\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
         ],
         "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {

@@ -13,18 +13,12 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using InvoiceManagementSystem.API.Validators;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
-
 var jwtSettings = builder.Configuration.GetSection("Jwt");
-var key = Encoding.ASCII.GetBytes(jwtSettings["Key"]);
-
-
+var key = Encoding.ASCII.GetBytes(jwtSettings["Key"]!);
 
 // ✅ Add Controllers
-//builder.Services.AddControllers();
-
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateInvoiceValidator>();
 builder.Services.AddControllers()
@@ -32,6 +26,20 @@ builder.Services.AddControllers()
     {
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
     });
+
+
+// ✅ ✅ ADD CORS HERE
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 
 // ✅ Swagger
 builder.Services.AddEndpointsApiExplorer();
@@ -67,7 +75,7 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// ✅ Dependency Injection (BLL)=
+// ✅ Dependency Injection (BLL)
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 builder.Services.AddScoped<IInvoiceRepository, InvoiceRepository>();
 builder.Services.AddScoped<GetInvoiceByIdHandler>();
@@ -75,7 +83,7 @@ builder.Services.AddScoped<CreateInvoiceHandler>();
 builder.Services.AddScoped<CreatePaymentHandler>();
 builder.Services.AddScoped<InvoiceAnalyticsService>();
 
-
+// ✅ Authentication
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -97,21 +105,27 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+// ✅ Redis
 builder.Services.AddStackExchangeRedisCache(options =>
 {
     options.Configuration = "localhost:6379";
     options.InstanceName = "InvoiceApp_";
 });
+
+// ✅ Authorization
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-
 app.UseHttpsRedirection();
+
+// ✅ ✅ ADD CORS HERE (VERY IMPORTANT POSITION)
+app.UseCors("AllowFrontend");
 
 app.UseAuthentication();
 
 app.UseMiddleware<InvoiceManagementSystem.API.Middleware.ExceptionMiddleware>();
+
 app.UseAuthorization();
 
 // ✅ Swagger UI
@@ -120,8 +134,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-
 
 // ✅ Map Controllers
 app.MapControllers();

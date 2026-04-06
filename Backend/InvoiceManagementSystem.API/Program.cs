@@ -34,7 +34,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .WithOrigins("http://localhost:5173")
+            .WithOrigins("http://localhost:5173", "http://localhost:3000")
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -108,14 +108,20 @@ builder.Services.AddAuthentication(options =>
 // ✅ Redis
 builder.Services.AddStackExchangeRedisCache(options =>
 {
-    options.Configuration = "localhost:6379";
-    options.InstanceName = "InvoiceApp_";
+    options.Configuration = builder.Configuration["Redis:Configuration"] ?? "localhost:6379";
+    options.InstanceName = builder.Configuration["Redis:InstanceName"] ?? "InvoiceApp_";
 });
 
 // ✅ Authorization
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    dbContext.Database.Migrate();
+}
 
 app.UseHttpsRedirection();
 

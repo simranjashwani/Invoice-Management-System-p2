@@ -1,0 +1,50 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: invoice-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "YourStrong@Passw0rd"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+
+  redis:
+    image: redis:latest
+    container_name: invoice-redis
+    ports:
+      - "6379:6379"
+
+  invoice-api:
+    build:
+      context: ./Backend
+      dockerfile: InvoiceManagementSystem.API/Dockerfile
+    container_name: invoice-api
+    depends_on:
+      - sqlserver
+      - redis
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_URLS: "http://+:5000"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=InvoiceManagementDB;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True"
+      Jwt__Key: "ThisIsMySuperSecretKeyForJwtAuthentication12345"
+      Jwt__Issuer: "InvoiceApp"
+      Jwt__Audience: "InvoiceAppUsers"
+      Redis__Configuration: "redis:6379"
+      Redis__InstanceName: "InvoiceApp_"
+    ports:
+      - "5000:5000"
+
+  invoice-react:
+    build:
+      context: ./Frontend/invoice-management-ui
+      dockerfile: Dockerfile
+    container_name: invoice-react
+    depends_on:
+      - invoice-api
+    ports:
+      - "3000:80"
+
+volumes:
+  sqlserver_data:

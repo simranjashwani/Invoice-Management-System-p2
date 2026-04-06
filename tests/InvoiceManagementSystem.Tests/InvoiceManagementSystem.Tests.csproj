@@ -22,8 +22,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\InvoiceManagementSystem.DAL\InvoiceManagementSystem.DAL.csproj" />
-    <ProjectReference Include="..\InvoiceManagementSystem.BLL\InvoiceManagementSystem.BLL.csproj" />
+    <ProjectReference Include="..\..\Backend\InvoiceManagementSystem.API\InvoiceManagementSystem.API.csproj" />
+    <ProjectReference Include="..\..\Backend\InvoiceManagementSystem.DAL\InvoiceManagementSystem.DAL.csproj" />
+    <ProjectReference Include="..\..\Backend\InvoiceManagementSystem.BLL\InvoiceManagementSystem.BLL.csproj" />
   </ItemGroup>
 
 </Project>

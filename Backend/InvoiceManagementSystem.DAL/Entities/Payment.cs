@@ -16,7 +16,7 @@ namespace InvoiceManagementSystem.DAL.Entities
 
         public string? ReferenceNumber { get; set; }
 
-        public DateTime ReceivedDate { get; set; } = DateTime.Now;
+        public DateTime ReceivedDate { get; set; }
 
         // Navigation
         public Invoice? Invoice { get; set; }

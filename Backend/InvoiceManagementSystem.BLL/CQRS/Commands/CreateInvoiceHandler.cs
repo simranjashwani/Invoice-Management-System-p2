@@ -10,15 +10,16 @@ namespace InvoiceManagementSystem.BLL.CQRS.Commands
         private readonly InvoiceAnalyticsService _analyticsService;
 
         public CreateInvoiceHandler(IInvoiceRepository repository, InvoiceAnalyticsService analyticsService)
-{
-    _repository = repository;
-    _analyticsService = analyticsService;
-}
+        {
+            _repository = repository;
+            _analyticsService = analyticsService;
+        }
+
         public async Task<Invoice> Handle(CreateInvoiceCommand command)
         {
             var invoice = command.Invoice;
 
-            //  1. Generate Invoice Number (FORMAT: INV-YYYY-0001)
+            // 1. Generate Invoice Number (FORMAT: INV-YYYY-0001)
             var lastInvoice = await _repository.GetLastInvoiceAsync();
             int nextNumber = 1;
 
@@ -33,26 +34,37 @@ namespace InvoiceManagementSystem.BLL.CQRS.Commands
 
             invoice.InvoiceNumber = $"INV-{DateTime.Now.Year}-{nextNumber:D4}";
 
-            //  2. Set Default Fields
+            // 2. Default fields
             invoice.Status = InvoiceStatus.Draft;
             invoice.CreatedDate = DateTime.Now;
 
-            //  3. Calculate GrandTotal
-            var total = invoice.SubTotal + invoice.Tax - invoice.Discount;
+            // 3. Make sure LineItems list exists
+            invoice.LineItems ??= new List<InvoiceLineItem>();
 
-invoice.GrandTotal = total < 0 ? 0 : total;
+            // 4. Calculate each line item total
+            foreach (var item in invoice.LineItems)
+            {
+                item.LineTotal = (item.Quantity * item.UnitPrice) - item.Discount + item.Tax;
+            }
 
-            //  4. OutstandingBalance (initially full amount)
-           var totalPayments = invoice.Payments?.Sum(p => p.PaymentAmount) ?? 0;
+            // 5. Calculate invoice totals from line items
+            invoice.SubTotal = invoice.LineItems.Sum(x => x.Quantity * x.UnitPrice);
+            invoice.Tax = invoice.LineItems.Sum(x => x.Tax);
+            invoice.Discount = invoice.LineItems.Sum(x => x.Discount);
 
-invoice.OutstandingBalance = invoice.GrandTotal - totalPayments;
-          //  return await _repository.CreateAsync(invoice);
-          var createdInvoice = await _repository.CreateAsync(invoice);
+            var total = invoice.LineItems.Sum(x => x.LineTotal);
+            invoice.GrandTotal = total < 0 ? 0 : total;
 
-//  CLEAR CACHE HERE
-await _analyticsService.ClearCache();
+            // 6. Outstanding balance initially equals grand total
+            invoice.OutstandingBalance = invoice.GrandTotal;
 
-return createdInvoice;
+            // 7. Save invoice
+            var createdInvoice = await _repository.CreateAsync(invoice);
+
+            // 8. Clear analytics cache
+            await _analyticsService.ClearCache();
+
+            return createdInvoice;
         }
     }
 }

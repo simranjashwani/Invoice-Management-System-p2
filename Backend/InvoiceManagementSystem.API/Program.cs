@@ -12,6 +12,9 @@ using InvoiceManagementSystem.BLL.CQRS.Queries;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using InvoiceManagementSystem.API.Validators;
+using InvoiceManagementSystem.DAL.Entities;
+using InvoiceManagementSystem.API.Security;
+using Microsoft.Data.SqlClient;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -76,8 +79,11 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // ✅ Dependency Injection (BLL)
+builder.Services.AddScoped<IInvoiceLineItemRepository, InvoiceLineItemRepository>();
+builder.Services.AddScoped<IInvoiceLineItemService, InvoiceLineItemService>();
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 builder.Services.AddScoped<IInvoiceRepository, InvoiceRepository>();
+builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddScoped<GetInvoiceByIdHandler>();
 builder.Services.AddScoped<CreateInvoiceHandler>();
 builder.Services.AddScoped<CreatePaymentHandler>();
@@ -108,14 +114,107 @@ builder.Services.AddAuthentication(options =>
 // ✅ Redis
 builder.Services.AddStackExchangeRedisCache(options =>
 {
-    options.Configuration = "localhost:6379";
-    options.InstanceName = "InvoiceApp_";
+    options.Configuration = builder.Configuration["Redis:Configuration"] ?? "localhost:6379";
+    options.InstanceName = builder.Configuration["Redis:InstanceName"] ?? "InvoiceApp_";
 });
 
 // ✅ Authorization
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+    var maxAttempts = 24;
+    for (var attempt = 1; attempt <= maxAttempts; attempt++)
+    {
+        try
+        {
+            dbContext.Database.Migrate();
+
+            var demoUsers = new[]
+            {
+                new User { Username = "admin", Password = "1234", Role = "Admin" },
+                new User { Username = "manager", Password = "1234", Role = "FinanceManager" },
+                new User { Username = "financeuser", Password = "1234", Role = "FinanceUser" }
+            };
+
+            foreach (var demoUser in demoUsers)
+            {
+                var existingUser = dbContext.Users
+                    .FirstOrDefault(user => user.Username == demoUser.Username);
+
+                if (existingUser == null)
+                {
+                    demoUser.Password = PasswordHasher.HashPassword(demoUser.Password);
+                    dbContext.Users.Add(demoUser);
+                    continue;
+                }
+
+                var changed = false;
+
+                if (!PasswordHasher.VerifyPassword(demoUser.Password, existingUser.Password))
+                {
+                    existingUser.Password = PasswordHasher.HashPassword(demoUser.Password);
+                    changed = true;
+                }
+
+                if (existingUser.Role != demoUser.Role)
+                {
+                    existingUser.Role = demoUser.Role;
+                    changed = true;
+                }
+
+                if (changed)
+                {
+                    dbContext.Users.Update(existingUser);
+                }
+            }
+
+            if (!dbContext.Customers.Any())
+            {
+                dbContext.Customers.AddRange(
+                    new Customer
+                    {
+                        Name = "Acme Corp",
+                        Email = "accounts@acme.test",
+                        Phone = "9999999991",
+                        Address = "Mumbai"
+                    },
+                    new Customer
+                    {
+                        Name = "Globex Pvt Ltd",
+                        Email = "billing@globex.test",
+                        Phone = "9999999992",
+                        Address = "Bengaluru"
+                    },
+                    new Customer
+                    {
+                        Name = "Initech Solutions",
+                        Email = "finance@initech.test",
+                        Phone = "9999999993",
+                        Address = "Delhi"
+                    });
+            }
+
+            dbContext.SaveChanges();
+            break;
+        }
+        catch (Exception ex) when (
+            ex is SqlException ||
+            ex.InnerException is SqlException)
+        {
+            if (attempt == maxAttempts)
+            {
+                throw;
+            }
+
+            Thread.Sleep(TimeSpan.FromSeconds(5));
+        }
+    }
+}
 
 app.UseHttpsRedirection();
 

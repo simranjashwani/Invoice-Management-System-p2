@@ -1,10 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using StackExchange.Redis;
 
 [ApiController]
 [Route("api/invoices/analytics")]
-[Authorize(Roles = "FinancManager, Admin")]
+[Authorize(Roles = "FinanceManager,Admin")]
 public class AnalyticsController : ControllerBase
 {
     private readonly InvoiceAnalyticsService _service;

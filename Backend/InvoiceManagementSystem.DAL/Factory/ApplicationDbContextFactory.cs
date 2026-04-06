@@ -11,7 +11,7 @@ namespace InvoiceManagementSystem.DAL.Factory
             var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
 
             optionsBuilder.UseSqlServer(
-                "Server=LAPTOP-A9K6HH4U\\SQLEXPRESS;Database=InvoiceManagementDB;Trusted_Connection=True;TrustServerCertificate=True;"
+                "Server=localhost\\SQLEXPRESS;Database=InvoiceManagementDB;Trusted_Connection=True;TrustServerCertificate=True;"
             );
 
             return new ApplicationDbContext(optionsBuilder.Options);

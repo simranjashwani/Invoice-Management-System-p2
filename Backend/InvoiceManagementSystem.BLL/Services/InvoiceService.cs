@@ -177,17 +177,32 @@ private void PrintBucket(string title, List<AgingReportItem> invoices)
 
 public async Task<Invoice> CreateInvoiceAsync(Invoice invoice)
 {
-    // 🔥 Auto Invoice Number
+    // Auto invoice number
     invoice.InvoiceNumber = "INV-" + DateTime.Now.Ticks;
 
-    // 🔥 SubTotal (for now simple)
-    invoice.SubTotal = 0; // we will update later with line items
-
-    // 🔥 Grand Total Calculation
-    invoice.GrandTotal = invoice.SubTotal + invoice.Tax - invoice.Discount;
-
-    // 🔥 Default Status
+    // Default values
     invoice.Status = InvoiceStatus.Draft;
+    invoice.CreatedDate = DateTime.Now;
+
+    // Make sure LineItems is not null
+    invoice.LineItems ??= new List<InvoiceLineItem>();
+
+    // Calculate each line item total
+    foreach (var item in invoice.LineItems)
+    {
+        item.LineTotal = (item.Quantity * item.UnitPrice) - item.Discount + item.Tax;
+    }
+
+    // Calculate invoice totals from line items
+    invoice.SubTotal = invoice.LineItems.Sum(x => x.Quantity * x.UnitPrice);
+    invoice.Tax = invoice.LineItems.Sum(x => x.Tax);
+    invoice.Discount = invoice.LineItems.Sum(x => x.Discount);
+
+    var total = invoice.LineItems.Sum(x => x.LineTotal);
+    invoice.GrandTotal = total < 0 ? 0 : total;
+
+    // Outstanding at creation = full grand total
+    invoice.OutstandingBalance = invoice.GrandTotal;
 
     return await _invoiceRepository.CreateAsync(invoice);
 }
@@ -334,14 +349,48 @@ public async Task<Invoice?> UpdateInvoiceAsync(int id, CreateInvoiceDto dto)
         throw new Exception("Cannot update a paid invoice");
 
     // Update fields
+    if (dto.LineItems == null || dto.LineItems.Count == 0)
+        throw new Exception("At least one line item is required.");
+
     invoice.CustomerId = dto.CustomerId;
+    invoice.QuoteId = dto.QuoteId;
     invoice.InvoiceDate = dto.InvoiceDate;
     invoice.DueDate = dto.DueDate;
-    invoice.Discount = dto.Discount;
-    invoice.Tax = dto.Tax;
+    invoice.LineItems.Clear();
 
-    // Recalculate total
-    invoice.GrandTotal = invoice.SubTotal + invoice.Tax - invoice.Discount;
+    foreach (var item in dto.LineItems)
+    {
+        var quantity = Convert.ToInt32(item.Quantity);
+        var lineTotal = (quantity * item.UnitPrice) - item.Discount + item.Tax;
+
+        invoice.LineItems.Add(new InvoiceLineItem
+        {
+            Description = item.Description,
+            Quantity = quantity,
+            UnitPrice = item.UnitPrice,
+            Discount = item.Discount,
+            Tax = item.Tax,
+            LineTotal = lineTotal < 0 ? 0 : lineTotal
+        });
+    }
+
+    invoice.SubTotal = invoice.LineItems.Sum(item => item.Quantity * item.UnitPrice);
+    var lineDiscount = invoice.LineItems.Sum(item => item.Discount);
+    var lineTax = invoice.LineItems.Sum(item => item.Tax);
+
+    invoice.Discount = lineDiscount + dto.Discount;
+    invoice.Tax = lineTax + dto.Tax;
+    invoice.GrandTotal = Math.Max(0, invoice.SubTotal + invoice.Tax - invoice.Discount);
+
+    var totalPaid = invoice.Payments?.Sum(payment => payment.PaymentAmount) ?? 0;
+    invoice.OutstandingBalance = Math.Max(0, invoice.GrandTotal - totalPaid);
+
+    if (invoice.OutstandingBalance == 0 && totalPaid > 0)
+        invoice.Status = InvoiceStatus.Paid;
+    else if (totalPaid > 0)
+        invoice.Status = InvoiceStatus.PartiallyPaid;
+    else
+        invoice.Status = InvoiceStatus.Draft;
 
     return await _invoiceRepository.UpdateAsync(invoice);
 }

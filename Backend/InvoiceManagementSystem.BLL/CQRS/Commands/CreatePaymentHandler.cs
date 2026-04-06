@@ -10,14 +10,14 @@ public class CreatePaymentHandler
     private readonly ApplicationDbContext _context;
     private readonly InvoiceAnalyticsService _analyticsService;
 
-   public CreatePaymentHandler(ApplicationDbContext context, InvoiceAnalyticsService analyticsService)
-{
-    _context = context;
-    _analyticsService = analyticsService;
-}
+    public CreatePaymentHandler(ApplicationDbContext context, InvoiceAnalyticsService analyticsService)
+    {
+        _context = context;
+        _analyticsService = analyticsService;
+    }
+
     public async Task<Payment> Handle(CreatePaymentCommand command)
     {
-        //  Start transaction (atomic)
         using var transaction = await _context.Database.BeginTransactionAsync();
 
         var invoice = await _context.Invoices
@@ -36,7 +36,6 @@ public class CreatePaymentHandler
         if (command.PaymentAmount > outstanding)
             throw new BusinessException("Payment exceeds outstanding balance");
 
-        //  Create payment
         var payment = new Payment
         {
             InvoiceId = command.InvoiceId,
@@ -49,10 +48,8 @@ public class CreatePaymentHandler
 
         _context.Payments.Add(payment);
 
-        //  Update OutstandingBalance
         invoice.OutstandingBalance = outstanding - command.PaymentAmount;
 
-        //  Update Status
         if (invoice.OutstandingBalance == 0)
             invoice.Status = InvoiceStatus.Paid;
         else
@@ -60,9 +57,15 @@ public class CreatePaymentHandler
 
         await _context.SaveChangesAsync();
 
+        try
+        {
+            await _analyticsService.ClearCache();
+        }
+        catch
+        {
+            // ignore redis issue for now
+        }
 
-//  CLEAR CACHE
-await _analyticsService.ClearCache();
         await transaction.CommitAsync();
 
         return payment;

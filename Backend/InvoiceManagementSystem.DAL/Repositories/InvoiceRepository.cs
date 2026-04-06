@@ -23,6 +23,7 @@ namespace InvoiceManagementSystem.DAL.Repositories
         public async Task<Invoice?> GetByIdAsync(int id)
         {
             return await _context.Invoices
+                .Include(i => i.Customer)
                 .Include(i => i.LineItems)
                 .Include(i => i.Payments)
                 .FirstOrDefaultAsync(i => i.InvoiceId == id);
@@ -31,6 +32,7 @@ namespace InvoiceManagementSystem.DAL.Repositories
         public async Task<List<Invoice>> GetAllAsync()
         {
             return await _context.Invoices
+                .Include(i => i.Customer)
                 .Include(i => i.LineItems)
                 .Include(i => i.Payments)
                 .ToListAsync();

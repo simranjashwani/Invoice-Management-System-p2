@@ -41,5 +41,7 @@ namespace InvoiceManagementSystem.DAL.Entities
         public ICollection<InvoiceLineItem> LineItems { get; set; } = new List<InvoiceLineItem>();
 
         public ICollection<Payment> Payments { get; set; } = new List<Payment>();
+
+        public ICollection<InvoiceAttachment> Attachments { get; set; } = new List<InvoiceAttachment>();
     }
 }

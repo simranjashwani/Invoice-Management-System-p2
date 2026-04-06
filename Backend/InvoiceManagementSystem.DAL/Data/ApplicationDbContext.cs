@@ -16,84 +16,103 @@ namespace InvoiceManagementSystem.DAL.Data
 
         public DbSet<Payment> Payments { get; set; }
 
+        public DbSet<InvoiceAttachment> InvoiceAttachments { get; set; }
+
         public DbSet<PaymentMethod> PaymentMethods { get; set; }
 
         public DbSet<Customer> Customers { get; set; }
 
         public DbSet<User> Users { get; set; }
 
-       protected override void OnModelCreating(ModelBuilder modelBuilder)
-{
-    base.OnModelCreating(modelBuilder);
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
 
-    // Primary Keys
-    modelBuilder.Entity<Invoice>().HasKey(i => i.InvoiceId);
-    modelBuilder.Entity<InvoiceLineItem>().HasKey(li => li.LineItemId);
-    modelBuilder.Entity<Payment>().HasKey(p => p.PaymentId);
-    modelBuilder.Entity<PaymentMethod>().HasKey(pm => pm.MethodId);
+            // Primary Keys
+            modelBuilder.Entity<Invoice>().HasKey(i => i.InvoiceId);
+            modelBuilder.Entity<InvoiceLineItem>().HasKey(li => li.LineItemId);
+            modelBuilder.Entity<Payment>().HasKey(p => p.PaymentId);
+            modelBuilder.Entity<PaymentMethod>().HasKey(pm => pm.MethodId);
 
 
-    modelBuilder.Entity<Invoice>()
-    .HasOne(i => i.Customer)
-    .WithMany(c => c.Invoices)
-    .HasForeignKey(i => i.CustomerId)
-    .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<Invoice>()
+            .HasOne(i => i.Customer)
+            .WithMany(c => c.Invoices)
+            .HasForeignKey(i => i.CustomerId)
+            .OnDelete(DeleteBehavior.Restrict);
 
-    // Configure Decimal Precision
-modelBuilder.Entity<Invoice>()
-    .Property(i => i.SubTotal)
-    .HasPrecision(18, 2);
+            // Configure Decimal Precision
+            modelBuilder.Entity<Invoice>()
+                .Property(i => i.SubTotal)
+                .HasPrecision(18, 2);
 
-modelBuilder.Entity<Invoice>()
-    .Property(i => i.Tax)
-    .HasPrecision(18, 2);
+            modelBuilder.Entity<Invoice>()
+                .Property(i => i.Tax)
+                .HasPrecision(18, 2);
 
-modelBuilder.Entity<Invoice>()
-    .Property(i => i.Discount)
-    .HasPrecision(18, 2);
+            modelBuilder.Entity<Invoice>()
+                .Property(i => i.Discount)
+                .HasPrecision(18, 2);
 
-modelBuilder.Entity<Invoice>()
-    .Property(i => i.GrandTotal)
-    .HasPrecision(18, 2);
+            modelBuilder.Entity<Invoice>()
+                .Property(i => i.GrandTotal)
+                .HasPrecision(18, 2);
 
-modelBuilder.Entity<InvoiceLineItem>()
-    .Property(li => li.UnitPrice)
-    .HasPrecision(18, 2);
+            modelBuilder.Entity<Invoice>()
+            .Property(i => i.OutstandingBalance)
+            .HasPrecision(18, 2);
 
-modelBuilder.Entity<InvoiceLineItem>()
-    .Property(li => li.Tax)
-    .HasPrecision(18, 2);
+            modelBuilder.Entity<InvoiceLineItem>()
+                .Property(li => li.UnitPrice)
+                .HasPrecision(18, 2);
 
-modelBuilder.Entity<InvoiceLineItem>()
-    .Property(li => li.Discount)
-    .HasPrecision(18, 2);
+            modelBuilder.Entity<InvoiceLineItem>()
+                .Property(li => li.Tax)
+                .HasPrecision(18, 2);
 
-modelBuilder.Entity<InvoiceLineItem>()
-    .Property(li => li.LineTotal)
-    .HasPrecision(18, 2);
+            modelBuilder.Entity<InvoiceLineItem>()
+                .Property(li => li.Discount)
+                .HasPrecision(18, 2);
 
-modelBuilder.Entity<Payment>()
-    .Property(p => p.PaymentAmount)
-    .HasPrecision(18, 2);
+            modelBuilder.Entity<InvoiceLineItem>()
+                .Property(li => li.LineTotal)
+                .HasPrecision(18, 2);
 
-    // Invoice → LineItems (One-to-Many)
-    modelBuilder.Entity<Invoice>()
-        .HasMany(i => i.LineItems)
-        .WithOne(li => li.Invoice)
-        .HasForeignKey(li => li.InvoiceId)
-        .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<Payment>()
+                .Property(p => p.PaymentAmount)
+                .HasPrecision(18, 2);
 
-    // Invoice → Payments (One-to-Many)
-    modelBuilder.Entity<Invoice>()
-        .HasMany(i => i.Payments)
-        .WithOne(p => p.Invoice)
-        .HasForeignKey(p => p.InvoiceId)
-        .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<User>()
+                .HasIndex(user => user.Username)
+                .IsUnique();
 
-    // Unique Invoice Number
-    modelBuilder.Entity<Invoice>()
-        .HasIndex(i => i.InvoiceNumber)
-        .IsUnique();
-}
+            modelBuilder.Entity<InvoiceAttachment>()
+                .HasKey(attachment => attachment.InvoiceAttachmentId);
+
+            // Invoice → LineItems (One-to-Many)
+            modelBuilder.Entity<Invoice>()
+                .HasMany(i => i.LineItems)
+                .WithOne(li => li.Invoice)
+                .HasForeignKey(li => li.InvoiceId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Invoice → Payments (One-to-Many)
+            modelBuilder.Entity<Invoice>()
+                .HasMany(i => i.Payments)
+                .WithOne(p => p.Invoice)
+                .HasForeignKey(p => p.InvoiceId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Invoice>()
+                .HasMany(i => i.Attachments)
+                .WithOne(attachment => attachment.Invoice)
+                .HasForeignKey(attachment => attachment.InvoiceId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Unique Invoice Number
+            modelBuilder.Entity<Invoice>()
+                .HasIndex(i => i.InvoiceNumber)
+                .IsUnique();
+        }
     }
 }

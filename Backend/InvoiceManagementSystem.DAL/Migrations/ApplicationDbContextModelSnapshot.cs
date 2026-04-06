@@ -84,6 +84,7 @@ namespace InvoiceManagementSystem.DAL.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<decimal>("OutstandingBalance")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int?>("QuoteId")
@@ -108,6 +109,46 @@ namespace InvoiceManagementSystem.DAL.Migrations
                         .IsUnique();
 
                     b.ToTable("Invoices");
+                });
+
+            modelBuilder.Entity("InvoiceManagementSystem.DAL.Entities.InvoiceAttachment", b =>
+                {
+                    b.Property<int>("InvoiceAttachmentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("InvoiceAttachmentId"));
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("InvoiceId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RelativePath")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("StoredFileName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("InvoiceAttachmentId");
+
+                    b.HasIndex("InvoiceId");
+
+                    b.ToTable("InvoiceAttachments");
                 });
 
             modelBuilder.Entity("InvoiceManagementSystem.DAL.Entities.InvoiceLineItem", b =>
@@ -215,11 +256,18 @@ namespace InvoiceManagementSystem.DAL.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Username")
+                    b.Property<string>("Role")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
                     b.HasKey("UserId");
+
+                    b.HasIndex("Username")
+                        .IsUnique();
 
                     b.ToTable("Users");
                 });
@@ -233,6 +281,17 @@ namespace InvoiceManagementSystem.DAL.Migrations
                         .IsRequired();
 
                     b.Navigation("Customer");
+                });
+
+            modelBuilder.Entity("InvoiceManagementSystem.DAL.Entities.InvoiceAttachment", b =>
+                {
+                    b.HasOne("InvoiceManagementSystem.DAL.Entities.Invoice", "Invoice")
+                        .WithMany("Attachments")
+                        .HasForeignKey("InvoiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Invoice");
                 });
 
             modelBuilder.Entity("InvoiceManagementSystem.DAL.Entities.InvoiceLineItem", b =>
@@ -264,6 +323,8 @@ namespace InvoiceManagementSystem.DAL.Migrations
 
             modelBuilder.Entity("InvoiceManagementSystem.DAL.Entities.Invoice", b =>
                 {
+                    b.Navigation("Attachments");
+
                     b.Navigation("LineItems");
 
                     b.Navigation("Payments");

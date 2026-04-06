@@ -8,18 +8,22 @@ public class InvoiceAnalyticsService
     private readonly ApplicationDbContext _context;
     private readonly IDistributedCache _cache;
 
+    private const string OutstandingKey = "analytics:outstanding";
+    private const string RevenueKey = "analytics:revenue";
+    private const string DsoKey = "analytics:dso";
+    private const string AgingKey = "analytics:aging";
+
     public InvoiceAnalyticsService(ApplicationDbContext context, IDistributedCache cache)
     {
         _context = context;
         _cache = cache;
     }
 
-    // 🔥 CACHE HELPER
     private async Task<T> GetOrSetCache<T>(string key, Func<Task<T>> getData)
     {
         var cached = await _cache.GetStringAsync(key);
 
-        if (cached != null)
+        if (!string.IsNullOrWhiteSpace(cached))
             return JsonSerializer.Deserialize<T>(cached)!;
 
         var data = await getData();
@@ -30,67 +34,107 @@ public class InvoiceAnalyticsService
         };
 
         await _cache.SetStringAsync(key, JsonSerializer.Serialize(data), options);
-
         return data;
     }
 
-    // ✅ 1. Outstanding Total
-    public async Task<decimal> GetOutstanding()
+    public async Task<object> GetOutstanding()
     {
-        return await GetOrSetCache("outstanding", async () =>
+        return await GetOrSetCache(OutstandingKey, async () =>
         {
-            return await _context.Invoices.SumAsync(i => i.OutstandingBalance);
-        });
-    }
-
-    // ✅ 2. Revenue Summary
-    public async Task<decimal> GetRevenue()
-    {
-        return await GetOrSetCache("revenue", async () =>
-        {
-            return await _context.Invoices.SumAsync(i => i.GrandTotal);
-        });
-    }
-
-    // ✅ 3. DSO
-    public async Task<double> GetDSO()
-    {
-        return await GetOrSetCache("dso", async () =>
-        {
-            var totalOutstanding = await _context.Invoices.SumAsync(i => i.OutstandingBalance);
-            var totalSales = await _context.Invoices.SumAsync(i => i.GrandTotal);
-
-            if (totalSales == 0) return 0;
-
-            return (double)(totalOutstanding / totalSales) * 30; // 30 days
-        });
-    }
-
-    // ✅ 4. Aging
-    public async Task<object> GetAging()
-    {
-        return await GetOrSetCache("aging", async () =>
-        {
-            var today = DateTime.Now;
-
-            var invoices = await _context.Invoices.ToListAsync();
+            var totalOutstanding = await _context.Invoices
+                .AsNoTracking()
+                .SumAsync(i => i.OutstandingBalance);
 
             return new
             {
-                Current = invoices.Count(i => (today - i.DueDate).Days <= 0),
-                Days1To30 = invoices.Count(i => (today - i.DueDate).Days > 0 && (today - i.DueDate).Days <= 30),
-                Days31To60 = invoices.Count(i => (today - i.DueDate).Days > 30 && (today - i.DueDate).Days <= 60),
-                Days60Plus = invoices.Count(i => (today - i.DueDate).Days > 60)
+                totalOutstanding
             };
         });
     }
 
-    // 🔥 CLEAR CACHE
+    public async Task<object> GetRevenue()
+    {
+        return await GetOrSetCache(RevenueKey, async () =>
+        {
+            var totalRevenue = await _context.Invoices
+                .AsNoTracking()
+                .SumAsync(i => i.GrandTotal);
+
+            return new
+            {
+                totalRevenue
+            };
+        });
+    }
+
+    public async Task<object> GetDSO()
+    {
+        return await GetOrSetCache(DsoKey, async () =>
+        {
+            var totalOutstanding = await _context.Invoices
+                .AsNoTracking()
+                .SumAsync(i => i.OutstandingBalance);
+
+            var totalSales = await _context.Invoices
+                .AsNoTracking()
+                .SumAsync(i => i.GrandTotal);
+
+            if (totalSales == 0)
+            {
+                return new
+                {
+                    daysSalesOutstanding = 0d
+                };
+            }
+
+            return new
+            {
+                daysSalesOutstanding = (double)(totalOutstanding / totalSales) * 30
+            };
+        });
+    }
+
+    public async Task<object> GetAging()
+    {
+        return await GetOrSetCache(AgingKey, async () =>
+        {
+            var today = DateTime.Today;
+
+            var invoices = await _context.Invoices
+                .AsNoTracking()
+                .ToListAsync();
+
+            var buckets = new[]
+            {
+                new { Bucket = "Current", Min = int.MinValue, Max = 0 },
+                new { Bucket = "1 - 30 Days", Min = 1, Max = 30 },
+                new { Bucket = "31 - 60 Days", Min = 31, Max = 60 },
+                new { Bucket = "61+ Days", Min = 61, Max = int.MaxValue }
+            };
+
+            return buckets.Select(bucket =>
+            {
+                var bucketInvoices = invoices.Where(invoice =>
+                {
+                    var daysPastDue = (today - invoice.DueDate.Date).Days;
+                    return daysPastDue >= bucket.Min && daysPastDue <= bucket.Max;
+                }).ToList();
+
+                return new
+                {
+                    bucket = bucket.Bucket,
+                    invoiceCount = bucketInvoices.Count,
+                    totalAmount = bucketInvoices.Sum(invoice => invoice.OutstandingBalance)
+                };
+            }).ToList();
+        });
+    }
+
     public async Task ClearCache()
     {
-        await _cache.RemoveAsync("outstanding");
-        await _cache.RemoveAsync("revenue");
-        await _cache.RemoveAsync("dso");
-        await _cache.RemoveAsync("aging");
+        await _cache.RemoveAsync(OutstandingKey);
+        await _cache.RemoveAsync(RevenueKey);
+        await _cache.RemoveAsync(DsoKey);
+        await _cache.RemoveAsync(AgingKey);
     }
 }

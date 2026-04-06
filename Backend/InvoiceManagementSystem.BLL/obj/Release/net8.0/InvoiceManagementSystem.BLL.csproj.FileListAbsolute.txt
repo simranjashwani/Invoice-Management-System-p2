@@ -1,0 +1,16 @@
+C:\Users\Simran\Invoice-Management-System-p2\Backend\InvoiceManagementSystem.BLL\bin\Release\net8.0\InvoiceManagementSystem.BLL.deps.json
+C:\Users\Simran\Invoice-Management-System-p2\Backend\InvoiceManagementSystem.BLL\bin\Release\net8.0\InvoiceManagementSystem.BLL.dll
+C:\Users\Simran\Invoice-Management-System-p2\Backend\InvoiceManagementSystem.BLL\bin\Release\net8.0\InvoiceManagementSystem.BLL.pdb
+C:\Users\Simran\Invoice-Management-System-p2\Backend\InvoiceManagementSystem.BLL\bin\Release\net8.0\InvoiceManagementSystem.DAL.dll
+C:\Users\Simran\Invoice-Management-System-p2\Backend\InvoiceManagementSystem.BLL\bin\Release\net8.0\InvoiceManagementSystem.DAL.pdb
+C:\Users\Simran\Invoice-Management-System-p2\Backend\InvoiceManagementSystem.BLL\obj\Release\net8.0\InvoiceManagementSystem.BLL.csproj.AssemblyReference.cache
+C:\Users\Simran\Invoice-Management-System-p2\Backend\InvoiceManagementSystem.BLL\obj\Release\net8.0\InvoiceManagementSystem.BLL.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Simran\Invoice-Management-System-p2\Backend\InvoiceManagementSystem.BLL\obj\Release\net8.0\InvoiceManagementSystem.BLL.AssemblyInfoInputs.cache
+C:\Users\Simran\Invoice-Management-System-p2\Backend\InvoiceManagementSystem.BLL\obj\Release\net8.0\InvoiceManagementSystem.BLL.AssemblyInfo.cs
+C:\Users\Simran\Invoice-Management-System-p2\Backend\InvoiceManagementSystem.BLL\obj\Release\net8.0\InvoiceManagementSystem.BLL.csproj.CoreCompileInputs.cache
+C:\Users\Simran\Invoice-Management-System-p2\Backend\InvoiceManagementSystem.BLL\obj\Release\net8.0\InvoiceManagementSystem.BLL.sourcelink.json
+C:\Users\Simran\Invoice-Management-System-p2\Backend\InvoiceManagementSystem.BLL\obj\Release\net8.0\InvoiceM.23C78D79.Up2Date
+C:\Users\Simran\Invoice-Management-System-p2\Backend\InvoiceManagementSystem.BLL\obj\Release\net8.0\InvoiceManagementSystem.BLL.dll
+C:\Users\Simran\Invoice-Management-System-p2\Backend\InvoiceManagementSystem.BLL\obj\Release\net8.0\refint\InvoiceManagementSystem.BLL.dll
+C:\Users\Simran\Invoice-Management-System-p2\Backend\InvoiceManagementSystem.BLL\obj\Release\net8.0\InvoiceManagementSystem.BLL.pdb
+C:\Users\Simran\Invoice-Management-System-p2\Backend\InvoiceManagementSystem.BLL\obj\Release\net8.0\ref\InvoiceManagementSystem.BLL.dll

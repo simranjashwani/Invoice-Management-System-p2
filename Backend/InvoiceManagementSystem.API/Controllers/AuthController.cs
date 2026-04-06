@@ -5,47 +5,53 @@ using System.Security.Claims;
 using System.Text;
 using InvoiceManagementSystem.BLL.Models;
 using Microsoft.AspNetCore.Authorization;
+using InvoiceManagementSystem.DAL.Data;
+using Microsoft.EntityFrameworkCore;
+using InvoiceManagementSystem.API.Security;
 
 namespace InvoiceManagementSystem.API.Controllers
 {
-    
     [ApiController]
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
         private readonly IConfiguration _configuration;
+        private readonly ApplicationDbContext _context;
 
-        public AuthController(IConfiguration configuration)
+        public AuthController(IConfiguration configuration, ApplicationDbContext context)
         {
             _configuration = configuration;
+            _context = context;
         }
 
         [AllowAnonymous]
-       [HttpPost("login")]
-     public IActionResult Login(LoginDto loginDto)
+        [HttpPost("login")]
+        public async Task<IActionResult> Login(LoginDto loginDto)
         {
-            //  Dummy validation (for now)
-            if (loginDto.Username != "admin" || loginDto.Password != "1234")
+            var normalizedUsername = loginDto.Username.Trim().ToLowerInvariant();
+
+            var user = await _context.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(user => user.Username == normalizedUsername);
+
+            if (user == null || !PasswordHasher.VerifyPassword(loginDto.Password, user.Password))
+            {
                 return Unauthorized(new { message = "Invalid username or password" });
+            }
 
-            //  Generate Token
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]);
+            var jwtKey = _configuration["Jwt:Key"]
+                ?? throw new InvalidOperationException("JWT key is not configured.");
+            var key = Encoding.ASCII.GetBytes(jwtKey);
 
-            var role = "Admin"; // change based on user
-            //var role = "FinanceUser";
-             var userId = 1;
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-
-              Subject = new ClaimsIdentity(new[]
-{
-    new Claim(ClaimTypes.Name, loginDto.Username),
-
-    //  ADD THESE
-    new Claim("UserId", userId.ToString()),
-    new Claim(ClaimTypes.Role, role)
-}),
+                Subject = new ClaimsIdentity(new[]
+                {
+                    new Claim(ClaimTypes.Name, user.Username),
+                    new Claim("UserId", user.UserId.ToString()),
+                    new Claim(ClaimTypes.Role, user.Role)
+                }),
                 Expires = DateTime.UtcNow.AddHours(1),
                 Issuer = _configuration["Jwt:Issuer"],
                 Audience = _configuration["Jwt:Audience"],
@@ -59,9 +65,8 @@ namespace InvoiceManagementSystem.API.Controllers
             return Ok(new
             {
                 token = tokenHandler.WriteToken(token),
-                username = loginDto.Username,
-                 role = role
-    
+                username = user.Username,
+                role = user.Role
             });
         }
     }

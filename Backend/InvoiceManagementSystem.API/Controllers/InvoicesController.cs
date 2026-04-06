@@ -1,15 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
-using InvoiceManagementSystem.BLL.Interfaces;
- using InvoiceManagementSystem.BLL.Models;
-using InvoiceManagementSystem.DAL.Entities;
 using Microsoft.AspNetCore.Authorization;
+using InvoiceManagementSystem.BLL.Interfaces;
+using InvoiceManagementSystem.BLL.Models;
+using InvoiceManagementSystem.DAL.Entities;
 using InvoiceManagementSystem.BLL.CQRS.Commands;
 using InvoiceManagementSystem.BLL.CQRS.Queries;
 
-
 namespace InvoiceManagementSystem.API.Controllers
 {
-
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
@@ -17,20 +15,21 @@ namespace InvoiceManagementSystem.API.Controllers
     {
         private readonly IInvoiceService _invoiceService;
         private readonly GetInvoiceByIdHandler _getHandler;
-private readonly CreateInvoiceHandler _createHandler;
+        private readonly CreateInvoiceHandler _createHandler;
+        private readonly InvoiceAnalyticsService _analyticsService;
 
-       public InvoicesController(
-    IInvoiceService invoiceService,
-    GetInvoiceByIdHandler getHandler,
-    CreateInvoiceHandler createHandler)
-{
-    _invoiceService = invoiceService;
-    _getHandler = getHandler;
-    _createHandler = createHandler;
-}
+        public InvoicesController(
+            IInvoiceService invoiceService,
+            GetInvoiceByIdHandler getHandler,
+            CreateInvoiceHandler createHandler,
+            InvoiceAnalyticsService analyticsService)
+        {
+            _invoiceService = invoiceService;
+            _getHandler = getHandler;
+            _createHandler = createHandler;
+            _analyticsService = analyticsService;
+        }
 
-
-        //  GET: api/invoices
         [Authorize(Roles = "FinanceUser, FinanceManager, Admin")]
         [HttpGet]
         public async Task<IActionResult> GetAllInvoices()
@@ -39,18 +38,15 @@ private readonly CreateInvoiceHandler _createHandler;
             return Ok(invoices);
         }
 
-        //  GET: api/invoices/{id}
         [Authorize(Roles = "FinanceUser, FinanceManager, Admin")]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetInvoiceById(int id)
         {
-            // Validation
             if (id <= 0)
                 return BadRequest("Invalid invoice ID");
 
-           // var invoice = await _invoiceService.GetInvoiceByIdAsync(id);
-           var query = new GetInvoiceByIdQuery(id);
-var invoice = await _getHandler.Handle(query);
+            var query = new GetInvoiceByIdQuery(id);
+            var invoice = await _getHandler.Handle(query);
 
             if (invoice == null)
                 return NotFound(new { message = $"Invoice with ID {id} not found" });
@@ -58,63 +54,71 @@ var invoice = await _getHandler.Handle(query);
             return Ok(invoice);
         }
 
-        [Authorize(Roles = "FinanceUser , Admin")]
-[HttpPost]
-public async Task<IActionResult> CreateInvoice(CreateInvoiceDto dto )
-{
-    //  Validation
-    // if (dto.DueDate <= dto.InvoiceDate)
-    //     return BadRequest("Due date must be greater than invoice date");
+        [Authorize(Roles = "FinanceUser, Admin")]
+        [HttpPost]
+        public async Task<IActionResult> CreateInvoice(CreateInvoiceDto dto)
+        {
+            if (dto.LineItems == null || dto.LineItems.Count == 0)
+                return BadRequest(new { message = "At least one line item is required." });
 
-    //  Map DTO → Entity
-    var invoice = new Invoice
-    {
-        CustomerId = dto.CustomerId,
-        QuoteId = dto.QuoteId,
-        InvoiceDate = dto.InvoiceDate,
-        DueDate = dto.DueDate,
-        Discount = dto.Discount,
-        Tax = dto.Tax,
-        CreatedDate = DateTime.Now
-    };
+            var invoice = new Invoice
+            {
+                CustomerId = dto.CustomerId,
+                QuoteId = dto.QuoteId,
+                InvoiceDate = dto.InvoiceDate,
+                DueDate = dto.DueDate,
+                Discount = dto.Discount,
+                Tax = dto.Tax,
+                CreatedDate = DateTime.Now,
+                LineItems = dto.LineItems.Select(item => new InvoiceLineItem
+                {
+                    Description = item.Description,
+                    Quantity = (int)item.Quantity,
+                    UnitPrice = item.UnitPrice,
+                    Discount = item.Discount,
+                    Tax = item.Tax
+                }).ToList()
+            };
 
-    // Call service
-    //var createdInvoice = await _invoiceService.CreateInvoiceAsync(invoice);
-    var command = new CreateInvoiceCommand(invoice);
-var createdInvoice = await _createHandler.Handle(command);
+            var command = new CreateInvoiceCommand(invoice);
+            var createdInvoice = await _createHandler.Handle(command);
 
-    return Ok(createdInvoice);
-}
-[Authorize(Roles = "FinanceManager, Admin")]
-[HttpPut("{id}")]
-public async Task<IActionResult> UpdateInvoice(int id, CreateInvoiceDto dto)
-{
-    if (id <= 0)
-        return BadRequest("Invalid ID");
+            return Ok(createdInvoice);
+        }
 
-    var updatedInvoice = await _invoiceService.UpdateInvoiceAsync(id, dto);
-  //throw new Exception("Test exception");
-    if (updatedInvoice == null)
-        return NotFound($"Invoice with ID {id} not found");
+        [Authorize(Roles = "FinanceManager, Admin")]
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateInvoice(int id, CreateInvoiceDto dto)
+        {
+            if (id <= 0)
+                return BadRequest("Invalid ID");
 
-    return Ok(updatedInvoice);
-}
-[Authorize(Roles = "Admin")]
-[HttpDelete("{id}")]
-public async Task<IActionResult> DeleteInvoice(int id)
-{
-    if (id <= 0)
-        return BadRequest("Invalid ID");
+            var updatedInvoice = await _invoiceService.UpdateInvoiceAsync(id, dto);
 
-    try
-    {
-        await _invoiceService.DeleteInvoiceAsync(id);
-        return Ok("Invoice deleted successfully");
-    }
-    catch (Exception ex)
-    {
-        return BadRequest(ex.Message);
-    }
-}
+            if (updatedInvoice == null)
+                return NotFound($"Invoice with ID {id} not found");
+
+            await _analyticsService.ClearCache();
+            return Ok(updatedInvoice);
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteInvoice(int id)
+        {
+            if (id <= 0)
+                return BadRequest("Invalid ID");
+
+            try
+            {
+                await _invoiceService.DeleteInvoiceAsync(id);
+                await _analyticsService.ClearCache();
+                return Ok("Invoice deleted successfully");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
     }
+}

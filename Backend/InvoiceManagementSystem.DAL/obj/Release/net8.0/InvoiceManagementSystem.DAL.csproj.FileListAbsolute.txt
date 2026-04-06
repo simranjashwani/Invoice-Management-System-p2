@@ -1,0 +1,15 @@
+C:\Users\Simran\Invoice-Management-System-p2\Backend\InvoiceManagementSystem.DAL\bin\Release\net8.0\InvoiceManagementSystem.DAL.deps.json
+C:\Users\Simran\Invoice-Management-System-p2\Backend\InvoiceManagementSystem.DAL\bin\Release\net8.0\InvoiceManagementSystem.DAL.runtimeconfig.json
+C:\Users\Simran\Invoice-Management-System-p2\Backend\InvoiceManagementSystem.DAL\bin\Release\net8.0\InvoiceManagementSystem.DAL.dll
+C:\Users\Simran\Invoice-Management-System-p2\Backend\InvoiceManagementSystem.DAL\bin\Release\net8.0\InvoiceManagementSystem.DAL.pdb
+C:\Users\Simran\Invoice-Management-System-p2\Backend\InvoiceManagementSystem.DAL\obj\Release\net8.0\InvoiceManagementSystem.DAL.csproj.AssemblyReference.cache
+C:\Users\Simran\Invoice-Management-System-p2\Backend\InvoiceManagementSystem.DAL\obj\Release\net8.0\InvoiceManagementSystem.DAL.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Simran\Invoice-Management-System-p2\Backend\InvoiceManagementSystem.DAL\obj\Release\net8.0\InvoiceManagementSystem.DAL.AssemblyInfoInputs.cache
+C:\Users\Simran\Invoice-Management-System-p2\Backend\InvoiceManagementSystem.DAL\obj\Release\net8.0\InvoiceManagementSystem.DAL.AssemblyInfo.cs
+C:\Users\Simran\Invoice-Management-System-p2\Backend\InvoiceManagementSystem.DAL\obj\Release\net8.0\InvoiceManagementSystem.DAL.csproj.CoreCompileInputs.cache
+C:\Users\Simran\Invoice-Management-System-p2\Backend\InvoiceManagementSystem.DAL\obj\Release\net8.0\InvoiceManagementSystem.DAL.sourcelink.json
+C:\Users\Simran\Invoice-Management-System-p2\Backend\InvoiceManagementSystem.DAL\obj\Release\net8.0\InvoiceManagementSystem.DAL.dll
+C:\Users\Simran\Invoice-Management-System-p2\Backend\InvoiceManagementSystem.DAL\obj\Release\net8.0\refint\InvoiceManagementSystem.DAL.dll
+C:\Users\Simran\Invoice-Management-System-p2\Backend\InvoiceManagementSystem.DAL\obj\Release\net8.0\InvoiceManagementSystem.DAL.pdb
+C:\Users\Simran\Invoice-Management-System-p2\Backend\InvoiceManagementSystem.DAL\obj\Release\net8.0\InvoiceManagementSystem.DAL.genruntimeconfig.cache
+C:\Users\Simran\Invoice-Management-System-p2\Backend\InvoiceManagementSystem.DAL\obj\Release\net8.0\ref\InvoiceManagementSystem.DAL.dll
